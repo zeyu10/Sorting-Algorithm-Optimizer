@@ -67,13 +67,36 @@ vector<int> generateLargeRandom(int size) {
     return generateRandom(size);
 }
 
-
 void bubbleSort(vector<int>& arr, long long& comparisons) {
-    // TODO: 实现冒泡排序
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            comparisons++;
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+        if (!swapped) break;  // Early termination if sorted
+    }
 }
 
 void insertionSort(vector<int>& arr, long long& comparisons) {
-    // TODO: 实现插入排序
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        
+        // Count comparisons only once per shift
+        while (j >= 0) {
+            comparisons++;
+            if (arr[j] <= key) break;
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
 }
 
 void merge(vector<int>& arr, int l, int m, int r, long long& comparisons) {
