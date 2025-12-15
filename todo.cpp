@@ -108,7 +108,40 @@ vector<int> generateNearlySorted(int size,float disorderPercent = 0.1) {
     
     return arr;
 }
-vector<int> generateReversed(int size);
+vector<int> generateReversed(int size, int printLimit = 10) {
+    if (size <= 0) {
+        cerr << "Error: Array size must be positive" << endl;
+        return vector<int>();
+    }
+    
+    vector<int> arr(size);
+    
+    // Generate descending array: size, size-1, ..., 1
+    for (int i = 0; i < size; i++) {
+        arr[i] = size - i;
+    }
+    
+    // Print the array
+    if (arr.empty()) {
+        cout << "[] (empty array)" << endl;
+    } else {
+        cout << "[";
+        int show = min(static_cast<int>(arr.size()), printLimit);
+        
+        for (int i = 0; i < show; i++) {
+            cout << arr[i];
+            if (i < show - 1) cout << ", ";
+        }
+        
+        if (arr.size() > printLimit) {
+            cout << ", ... (" << arr.size() - printLimit << " more)";
+        }
+        
+        cout << "]" << endl;
+    }
+    
+    return arr;
+}
 vector<int> generateFewUnique(int size);
 vector<int> generateLargeRandom(int size);
 
