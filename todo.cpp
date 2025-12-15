@@ -21,8 +21,93 @@ struct SortMetrics {
 };
 
 // Task 1: Dataset Generation
-vector<int> generateRandom(int size);
-vector<int> generateNearlySorted(int size);
+vector<int> generateRandomDataset(int size,
+                             int minVal = numeric_limits<int>::min(), 
+                             int maxVal = numeric_limits<int>::max()) {
+    // Strict parameter checking
+    if (size <= 0) {
+        throw invalid_argument("Array size must be positive");
+    }
+    
+    if (minVal > maxVal) {
+        throw invalid_argument("Minimum value cannot be greater than maximum value");
+    }
+    
+    // Initialize random seed
+    static bool seeded = false;
+    if (!seeded) {
+        srand(time(nullptr));
+        seeded = true;
+    }
+    
+    // Generate array
+    vector<int> arr;
+    
+    // For very large ranges, use better distribution
+    long long range = static_cast<long long>(maxVal) - minVal + 1;
+    
+    if (range > RAND_MAX) {
+        // Use multiple rand() calls for large ranges
+        arr.reserve(size);
+        for (int i = 0; i < size; i++) {
+            // Calculate how many rand() calls we need
+            int parts = 1;
+            long long current_max = RAND_MAX;
+            while (range > current_max) {
+                parts++;
+                current_max = current_max * (RAND_MAX + 1LL);
+            }
+            
+            long long random_val = 0;
+            for (int j = 0; j < parts; j++) {
+                random_val = random_val * (RAND_MAX + 1LL) + rand();
+            }
+            
+            arr.push_back(minVal + static_cast<int>(random_val % range));
+        }
+    } else {
+        // Standard case for smaller ranges
+        arr.reserve(size);
+        int int_range = static_cast<int>(range);
+        for (int i = 0; i < size; i++) {
+            arr.push_back(minVal + rand() % int_range);
+        }
+    }
+    
+    return arr;
+}
+vector<int> generateNearlySorted(int size,float disorderPercent = 0.1) {
+    if (size <= 0) return vector<int>();
+    
+    // Limit disorder percentage between 0-50%
+    if (disorderPercent < 0) disorderPercent = 0;
+    if (disorderPercent > 0.5) disorderPercent = 0.5;
+    
+    // Initialize random seed
+    static bool seeded = false;
+    if (!seeded) {
+        srand(time(nullptr));
+        seeded = true;
+    }
+    
+    // 1. Create sorted array
+    vector<int> arr(size);
+    for (int i = 0; i < size; i++) {
+        arr[i] = i + 1;
+    }
+    
+    // 2. Calculate number of elements to disorder
+    int disorderCount = static_cast<int>(size * disorderPercent);
+    
+    // 3. Randomly select positions and replace with random values
+    for (int i = 0; i < disorderCount; i++) {
+        int randomIndex = rand() % size;
+        int randomValue = 1 + rand() % (size * 2);  // Larger range
+        arr[randomIndex] = randomValue;
+    }
+    
+    return arr;
+}
 vector<int> generateReversed(int size);
 vector<int> generateFewUnique(int size);
 vector<int> generateLargeRandom(int size);
