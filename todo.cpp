@@ -270,13 +270,9 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
     
     return arr;
 }
-DatasetFeatures generateReversed(int size, int printLimit = 10) {     
-    DatasetFeatures result;
-    
+vector<int> generateReversed(int size, int printLimit = 10) {     
     if (size <= 0) {         
-        cerr << "Error: Array size must be positive" << endl;         
-        result.type = "Error";
-        return result;
+        throw invalid_argument("Array size must be positive. Got: " + to_string(size));
     }          
     
     vector<int> arr(size);
@@ -294,16 +290,16 @@ DatasetFeatures generateReversed(int size, int printLimit = 10) {
     // 按降序排序
     sort(arr.begin(), arr.end(), greater<int>());
     
-    // 计算特征
-    result.data = arr;
-    result.size = size;
-    result.type = "Random descending array";
+    // 使用DatasetFeatures结构体计算特征
+    DatasetFeatures features;
+    features.data = arr;
+    features.size = size;
+    features.type = "Random descending array";
     
     // 计算有序度
     if (size < 2) {
-        result.sortedness = 1.0;
+        features.sortedness = 1.0;
     } else {
-        // 降序数组的有序度接近1.0
         int correct = 0;
         int totalPairs = size * (size - 1) / 2;
         for (int i = 0; i < size; i++) {
@@ -311,12 +307,12 @@ DatasetFeatures generateReversed(int size, int printLimit = 10) {
                 if (arr[i] >= arr[j]) correct++;
             }
         }
-        result.sortedness = (double)correct / totalPairs;
+        features.sortedness = (double)correct / totalPairs;
     }
     
     // 计算唯一元素数量
     unordered_set<int> uniqueSet(arr.begin(), arr.end());
-    result.uniqueCount = uniqueSet.size();
+    features.uniqueCount = uniqueSet.size();
     
     // 打印数组
     if (arr.empty()) {         
@@ -337,7 +333,7 @@ DatasetFeatures generateReversed(int size, int printLimit = 10) {
         cout << "]" << endl;     
     }          
     
-    return result; 
+    return arr; 
 }
 vector<int> generateFewUniqueArray(int size, int uniqueCount = 5, 
                                   bool printArray = true, 
