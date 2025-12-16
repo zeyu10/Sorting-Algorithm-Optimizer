@@ -25,14 +25,19 @@ struct SortMetrics {
 // Task 1: Dataset Generation
 vector<int> generateRandomDataset(int size,
                              int minVal = numeric_limits<int>::min(), 
-                             int maxVal = numeric_limits<int>::max()) {
+                             int maxVal = numeric_limits<int>::max(),
+                             bool printInfo = true,
+                             int printLimit = 10) {
+    
     // Strict parameter checking
     if (size <= 0) {
-        throw invalid_argument("Array size must be positive");
+        throw invalid_argument("Array size must be positive. Got: " + to_string(size));
     }
     
     if (minVal > maxVal) {
-        throw invalid_argument("Minimum value cannot be greater than maximum value");
+        throw invalid_argument("Minimum value (" + to_string(minVal) + 
+                              ") cannot be greater than maximum value (" + 
+                              to_string(maxVal) + ")");
     }
     
     // Initialize random seed
@@ -75,6 +80,86 @@ vector<int> generateRandomDataset(int size,
             arr.push_back(minVal + rand() % int_range);
         }
     }
+    
+    // 如果不需要打印，直接返回数组
+    if (!printInfo) {
+        return arr;
+    }
+    
+    // 计算特征用于打印
+    DatasetFeatures features;
+    features.data = arr;
+    features.size = size;
+    
+    // 计算有序度
+    if (arr.size() < 2) {
+        features.sortedness = 0.5; // 单个元素时返回中间值
+    } else {
+        long long inversions = 0;
+        int n = arr.size();
+        
+        // 计算逆序数
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (arr[i] > arr[j]) inversions++;
+            }
+        }
+        
+        // 最大可能的逆序数 = n*(n-1)/2
+        long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
+        
+        if (maxInversions == 0) {
+            features.sortedness = 0.5;
+        } else {
+            // 逆序比 = 逆序数/最大逆序数
+            double inversionRatio = static_cast<double>(inversions) / maxInversions;
+            
+            // 有序度 = 1 - 2 * |逆序比 - 0.5|
+            features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
+            features.sortedness = max(0.0, min(1.0, features.sortedness));
+        }
+    }
+    
+    // 计算唯一元素数量
+    unordered_set<int> uniqueSet(arr.begin(), arr.end());
+    features.uniqueCount = uniqueSet.size();
+    
+    // 设置数组类型
+    string valueRange = "[" + to_string(minVal) + ", " + to_string(maxVal) + "]";
+    if (minVal == numeric_limits<int>::min() && maxVal == numeric_limits<int>::max()) {
+        features.type = "Completely Random Array (full int range)";
+    } else if (range <= 100) {
+        features.type = "Random Array with Limited Range " + valueRange;
+    } else {
+        features.type = "Random Array with Range " + valueRange;
+    }
+    
+    // 打印信息
+    cout << "=== Generated Random Dataset ===" << endl;
+    cout << "Type: " << features.type << endl;
+    cout << "Size: " << features.size << " elements" << endl;
+    cout << "Sortedness: " << fixed << setprecision(3) << features.sortedness 
+         << " (0=random, 1=sorted)" << endl;
+    cout << "Unique values: " << features.uniqueCount 
+         << " (" << fixed << setprecision(1) 
+         << (features.size > 0 ? (100.0 * features.uniqueCount / features.size) : 0.0)
+         << "% of total)" << endl;
+    
+    // 打印数组预览
+    cout << "Array preview [" << min(printLimit, size) << "/" << size << "]: [";
+    
+    int show = min(printLimit, size);
+    for (int i = 0; i < show; i++) {
+        cout << arr[i];
+        if (i < show - 1) cout << ", ";
+    }
+    
+    if (size > printLimit) {
+        cout << ", ... (" << size - printLimit << " more)";
+    }
+    cout << "]" << endl;
+    
+    cout << "=================================" << endl;
     
     return arr;
 }
