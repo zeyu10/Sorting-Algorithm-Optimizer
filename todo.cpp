@@ -660,14 +660,6 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
     }
     cout << "]" << endl;
     
-    // 显示性能信息
-    size_t memoryUsage = size * sizeof(int);
-    cout << "Memory usage: " 
-         << (memoryUsage < 1024 ? to_string(memoryUsage) + " bytes" :
-             memoryUsage < 1024*1024 ? to_string(memoryUsage/1024) + " KB" :
-             to_string(memoryUsage/(1024*1024)) + " MB") << endl;
-    
-    cout << "=================================" << endl;
     
     return arr; 
 }
