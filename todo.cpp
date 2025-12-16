@@ -410,134 +410,266 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
         arr[i] = uniqueValues[randomIndex];
     }
     
-    // 3. Print the array if requested
-    if (printArray) {
-        cout << "Generated few-unique array:" << endl;
-        cout << "  Size: " << size << " elements" << endl;
+    // 如果不需要打印信息，直接返回数组
+    if (!printArray) {
+        return arr;
+    }
+    
+    // 使用DatasetFeatures结构体计算和打印信息
+    DatasetFeatures features;
+    features.data = arr;
+    features.size = size;
+    
+    // 计算有序度
+    if (arr.size() < 2) {
+        features.sortedness = 0.5;
+    } else {
+        long long inversions = 0;
+        int n = arr.size();
         
-        // 统计数组中实际有多少个不同的值
-        unordered_set<int> actualUniqueSet(arr.begin(), arr.end());
-        int actualUniqueCount = actualUniqueSet.size();
-        cout << "  Unique values in array: " << actualUniqueCount 
-             << " (requested: " << uniqueCount << ")" << endl;
-        
-        if (actualUniqueCount < uniqueCount) {
-            cout << "  Note: Not all " << uniqueCount 
-                 << " generated values appear in the full array" << endl;
-        }
-        
-        // 显示生成的所有唯一值（排序后）
-        sort(uniqueValues.begin(), uniqueValues.end());
-        cout << "  Generated unique values: [";
-        
-        size_t showUnique = min(uniqueValues.size(), (size_t)5);
-        for (size_t i = 0; i < showUnique; i++) {
-            cout << uniqueValues[i];
-            if (i < showUnique - 1) cout << ", ";
-        }
-        if (uniqueValues.size() > 5) {
-            cout << ", ... (" << uniqueValues.size() - 5 << " more)";
-        }
-        cout << "]" << endl;
-        
-        // 显示数组内容
-        int show = min(size, printLimit);
-        cout << "  Array preview [" << show << "/" << size << "]: [";
-        
-        for (int i = 0; i < show; i++) {
-            cout << arr[i];
-            if (i < show - 1) cout << ", ";
-        }
-        
-        if (size > printLimit) {
-            cout << ", ... (" << size - printLimit << " more)";
-        }
-        cout << "]" << endl;
-        
-        // 显示预览部分的分布统计
-        if (show >= 3) {
-            unordered_map<int, int> freq;
-            for (int i = 0; i < show; i++) {
-                freq[arr[i]]++;
+        // 计算逆序数
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (arr[i] > arr[j]) inversions++;
             }
+        }
+        
+        // 最大可能的逆序数 = n*(n-1)/2
+        long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
+        
+        if (maxInversions == 0) {
+            features.sortedness = 0.5;
+        } else {
+            // 逆序比 = 逆序数/最大逆序数
+            double inversionRatio = static_cast<double>(inversions) / maxInversions;
             
-            if (freq.size() <= 10) { // 如果唯一值不多，显示完整统计
-                cout << "  Distribution in preview: ";
-                vector<pair<int, int>> freqVec(freq.begin(), freq.end());
-                sort(freqVec.begin(), freqVec.end(), 
-                     [](const pair<int, int>& a, const pair<int, int>& b) {
-                         return a.second > b.second; // 按频率降序
-                     });
-                
-                for (size_t i = 0; i < freqVec.size(); i++) {
-                    if (i > 0) cout << ", ";
-                    cout << freqVec[i].first << ":" << freqVec[i].second;
-                }
-                cout << endl;
-            }
+            // 有序度 = 1 - 2 * |逆序比 - 0.5|
+            features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
+            features.sortedness = max(0.0, min(1.0, features.sortedness));
         }
     }
+    
+    // 计算唯一元素数量
+    unordered_set<int> actualUniqueSet(arr.begin(), arr.end());
+    features.uniqueCount = actualUniqueSet.size();
+    
+    // 打印信息
+    cout << "=== Generated Few Unique Array ===" << endl;
+    cout << "Type: " << features.type << endl;
+    cout << "Size: " << features.size << " elements" << endl;
+    cout << "Requested unique values: " << uniqueCount << endl;
+    cout << "Actual unique values: " << features.uniqueCount << endl;
+    cout << "Sortedness: " << fixed << setprecision(3) << features.sortedness 
+         << " (0=random, 1=sorted)" << endl;
+    
+    // 打印生成的唯一值
+    sort(uniqueValues.begin(), uniqueValues.end());
+    cout << "Generated unique values (" << uniqueValues.size() << "): [";
+    int showUnique = min(5, (int)uniqueValues.size());
+    for (int i = 0; i < showUnique; i++) {
+        cout << uniqueValues[i];
+        if (i < showUnique - 1) cout << ", ";
+    }
+    if (uniqueValues.size() > 5) {
+        cout << ", ... " << uniqueValues.size() - 5 << " more";
+    }
+    cout << "]" << endl;
+    
+    // 打印数组内容
+    int show = min(printLimit, size);
+    cout << "Array preview [" << show << "/" << size << "]: [";
+    for (int i = 0; i < show; i++) {
+        cout << arr[i];
+        if (i < show - 1) cout << ", ";
+    }
+    
+    if (size > printLimit) {
+        cout << ", ... (" << size - printLimit << " more)";
+    }
+    cout << "]" << endl;
+    
+    // 打印预览部分的统计
+    if (show >= 5) {
+        unordered_set<int> previewUniqueSet;
+        for (int i = 0; i < show; i++) {
+            previewUniqueSet.insert(arr[i]);
+        }
+        cout << "Unique values in preview: " << previewUniqueSet.size() << "/" << show << endl;
+    }
+    
+    cout << "=================================" << endl;
     
     return arr;
 }
-vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1000000) {
-    // Parameter validation
-    if (size <= 0) {
-        throw invalid_argument("Error: Array size must be positive. Got: " + to_string(size));
+
+vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1000000, 
+                               bool printInfo = true, int printLimit = 10) {     
+    // Parameter validation     
+    if (size <= 0) {         
+        throw invalid_argument("Error: Array size must be positive. Got: " + to_string(size));     
+    }          
+
+    // Check minVal and maxVal     
+    if (minVal > maxVal) {         
+        throw invalid_argument("Error: minVal must be less than or equal to maxVal. Got: minVal=" +                               
+                              to_string(minVal) + ", maxVal=" + to_string(maxVal));     
+    }          
+
+    // Initialize random seed     
+    static bool seeded = false;     
+    if (!seeded) {         
+        srand(time(nullptr));         
+        seeded = true;     
+    }          
+
+    // Generate array     
+    vector<int> arr;     
+    try {         
+        // Pre-allocate memory for better performance with large arrays         
+        arr.reserve(size);                  
+
+        // Calculate random number range         
+        long long range = static_cast<long long>(maxVal) - minVal + 1;                  
+
+        // For large ranges, use better random number generation         
+        if (range > RAND_MAX) {             
+            // Use multiple rand() calls to generate larger random numbers             
+            for (int i = 0; i < size; i++) {                 
+                // Generate random number between 0 and range-1                 
+                long long random_value = 0;                 
+                // Combine multiple rand() values for larger range                 
+                int parts = (range + RAND_MAX) / RAND_MAX;                 
+                for (int j = 0; j < parts; j++) {                     
+                    random_value = random_value * (RAND_MAX + 1LL) + rand();                 
+                }                 
+                arr.push_back(minVal + static_cast<int>(random_value % range));             
+            }         
+        } else {             
+            // Small range, use rand() directly             
+            for (int i = 0; i < size; i++) {                 
+                arr.push_back(minVal + rand() % static_cast<int>(range));             
+            }         
+        }     
+    } catch (const bad_alloc& e) {         
+        // Memory allocation failure         
+        cerr << "Memory allocation failed for size " << size << ": " << e.what() << endl;         
+        throw;     
+    } catch (...) {         
+        // Other exceptions         
+        cerr << "Unknown error occurred while generating array of size " << size << endl;         
+        throw;     
+    }          
+
+    // 如果不需要打印信息，直接返回数组
+    if (!printInfo) {
+        return arr;
     }
     
-    // Check minVal and maxVal
-    if (minVal > maxVal) {
-        throw invalid_argument("Error: minVal must be less than or equal to maxVal. Got: minVal=" + 
-                             to_string(minVal) + ", maxVal=" + to_string(maxVal));
+    // 使用DatasetFeatures结构体计算和打印信息
+    DatasetFeatures features;
+    features.data = arr;
+    features.size = size;
+    
+    // 设置数组类型
+    if (size >= 10000) {
+        features.type = "Large Random Array [" + to_string(minVal) + ".." + to_string(maxVal) + "]";
+    } else if (size >= 1000) {
+        features.type = "Medium Random Array [" + to_string(minVal) + ".." + to_string(maxVal) + "]";
+    } else {
+        features.type = "Small Random Array [" + to_string(minVal) + ".." + to_string(maxVal) + "]";
     }
     
-    // Initialize random seed
-    static bool seeded = false;
-    if (!seeded) {
-        srand(time(nullptr));
-        seeded = true;
-    }
-    
-    // Generate array
-    vector<int> arr;
-    try {
-        // Pre-allocate memory for better performance with large arrays
-        arr.reserve(size);
+    // 计算有序度（对于随机数组，理论上应该接近0）
+    // 对于大数组，我们只计算一部分以提高性能
+    if (arr.size() < 2) {
+        features.sortedness = 0.5;
+    } else {
+        // 对于大数组，计算一部分元素的有序度
+        int checkSize = min(1000, size);
+        long long inversions = 0;
         
-        // Calculate random number range
-        long long range = static_cast<long long>(maxVal) - minVal + 1;
-        
-        // For large ranges, use better random number generation
-        if (range > RAND_MAX) {
-            // Use multiple rand() calls to generate larger random numbers
-            for (int i = 0; i < size; i++) {
-                // Generate random number between 0 and range-1
-                long long random_value = 0;
-                // Combine multiple rand() values for larger range
-                int parts = (range + RAND_MAX) / RAND_MAX;
-                for (int j = 0; j < parts; j++) {
-                    random_value = random_value * (RAND_MAX + 1LL) + rand();
-                }
-                arr.push_back(minVal + static_cast<int>(random_value % range));
-            }
-        } else {
-            // Small range, use rand() directly
-            for (int i = 0; i < size; i++) {
-                arr.push_back(minVal + rand() % static_cast<int>(range));
+        for (int i = 0; i < checkSize; i++) {
+            for (int j = i + 1; j < checkSize; j++) {
+                if (arr[i] > arr[j]) inversions++;
             }
         }
-    } catch (const bad_alloc& e) {
-        // Memory allocation failure
-        cerr << "Memory allocation failed for size " << size << ": " << e.what() << endl;
-        throw;
-    } catch (...) {
-        // Other exceptions
-        cerr << "Unknown error occurred while generating array of size " << size << endl;
-        throw;
+        
+        long long maxInversions = static_cast<long long>(checkSize) * (checkSize - 1) / 2;
+        if (maxInversions == 0) {
+            features.sortedness = 0.5;
+        } else {
+            // 有序度 = 1 - (逆序数/最大逆序数)
+            double inversionRatio = static_cast<double>(inversions) / maxInversions;
+            // 随机数组的有序度应该接近0
+            features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
+            features.sortedness = max(0.0, min(1.0, features.sortedness));
+        }
     }
     
-    return arr;
+    // 计算唯一元素数量
+    // 对于大数组，也计算一部分以提高性能
+    if (size <= 5000) {
+        // 对于小数组，直接计算
+        unordered_set<int> uniqueSet(arr.begin(), arr.end());
+        features.uniqueCount = uniqueSet.size();
+    } else {
+        // 对于大数组，计算前一部分的唯一值数量
+        int checkSize = min(5000, size);
+        unordered_set<int> uniqueSet(arr.begin(), arr.begin() + checkSize);
+        features.uniqueCount = uniqueSet.size();
+        // 不进行估算，只显示实际检查到的唯一值数量
+    }
+    
+    // 打印信息
+    cout << "=== Generated Random Array ===" << endl;
+    cout << "Type: " << features.type << endl;
+    cout << "Size: " << features.size << " elements" << endl;
+    cout << "Value range: [" << minVal << ".." << maxVal << "]" << endl;
+    cout << "Sortedness: " << fixed << setprecision(3) << features.sortedness 
+         << " (0=random, 1=sorted)" << endl;
+    cout << "Unique values (in checked portion): " << features.uniqueCount << endl;
+    
+    // 计算并显示一些统计信息
+    if (size > 0) {
+        // 只计算前一部分的统计信息以提高性能
+        int checkSize = min(1000, size);
+        int minValActual = arr[0];
+        int maxValActual = arr[0];
+        long long sum = 0;
+        
+        for (int i = 0; i < checkSize; i++) {
+            if (arr[i] < minValActual) minValActual = arr[i];
+            if (arr[i] > maxValActual) maxValActual = arr[i];
+            sum += arr[i];
+        }
+        
+        cout << "Checked range: [" << minValActual << ".." << maxValActual << "]" << endl;
+        cout << "Checked average: " << fixed << setprecision(2) 
+             << (static_cast<double>(sum) / checkSize) << endl;
+    }
+    
+    // 打印数组预览
+    int show = min(printLimit, size);
+    cout << "Array preview [" << show << "/" << size << "]: [";
+    for (int i = 0; i < show; i++) {
+        cout << arr[i];
+        if (i < show - 1) cout << ", ";
+    }
+    if (size > show) {
+        cout << ", ... (" << size - show << " more)";
+    }
+    cout << "]" << endl;
+    
+    // 显示性能信息
+    size_t memoryUsage = size * sizeof(int);
+    cout << "Memory usage: " 
+         << (memoryUsage < 1024 ? to_string(memoryUsage) + " bytes" :
+             memoryUsage < 1024*1024 ? to_string(memoryUsage/1024) + " KB" :
+             to_string(memoryUsage/(1024*1024)) + " MB") << endl;
+    
+    cout << "=================================" << endl;
+    
+    return arr; 
 }
 
 // Task 2 & 3: Sorting Algorithms（注意：都需要引用传递 comparisons 以计数）
