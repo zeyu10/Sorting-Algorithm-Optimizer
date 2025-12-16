@@ -9,9 +9,11 @@ enum AlgoType {
 };
 
 struct DatasetFeatures {
+    vector<int> data;
     int size;
-    double sortedness; // 0.0 （乱序）到 1.0 （已排序）
-    int uniqueCount;   // 唯一元素数量
+    double sortedness;  // 0.0（乱序）到 1.0（已排序）
+    int uniqueCount;    // 唯一元素数量
+    string type;        // 数组类型   
 };
 
 struct SortMetrics {
@@ -108,42 +110,279 @@ vector<int> generateNearlySorted(int size,float disorderPercent = 0.1) {
     
     return arr;
 }
-vector<int> generateReversed(int size, int printLimit = 10) {
-    if (size <= 0) {
-        cerr << "Error: Array size must be positive" << endl;
-        return vector<int>();
-    }
+DatasetFeatures generateReversed(int size, int printLimit = 10) {     
+    DatasetFeatures result;
+    
+    if (size <= 0) {         
+        cerr << "Error: Array size must be positive" << endl;         
+        result.type = "Error";
+        return result;
+    }          
     
     vector<int> arr(size);
     
-    // Generate descending array: size, size-1, ..., 1
+    // 使用当前时间作为随机种子
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> distribution(1, size * 10);
+    
+    // 生成随机数组
     for (int i = 0; i < size; i++) {
-        arr[i] = size - i;
+        arr[i] = distribution(generator);
     }
     
-    // Print the array
-    if (arr.empty()) {
-        cout << "[] (empty array)" << endl;
+    // 按降序排序
+    sort(arr.begin(), arr.end(), greater<int>());
+    
+    // 计算特征
+    result.data = arr;
+    result.size = size;
+    result.type = "Random descending array";
+    
+    // 计算有序度
+    if (size < 2) {
+        result.sortedness = 1.0;
     } else {
-        cout << "[";
-        int show = min(static_cast<int>(arr.size()), printLimit);
+        // 降序数组的有序度接近1.0
+        int correct = 0;
+        int totalPairs = size * (size - 1) / 2;
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                if (arr[i] >= arr[j]) correct++;
+            }
+        }
+        result.sortedness = (double)correct / totalPairs;
+    }
+    
+    // 计算唯一元素数量
+    unordered_set<int> uniqueSet(arr.begin(), arr.end());
+    result.uniqueCount = uniqueSet.size();
+    
+    // 打印数组
+    if (arr.empty()) {         
+        cout << "[] (empty array)" << endl;     
+    } else {         
+        cout << "[";         
+        int show = min(size, printLimit);                  
+        
+        for (int i = 0; i < show; i++) {             
+            cout << arr[i];             
+            if (i < show - 1) cout << ", ";         
+        }                  
+        
+        if (size > printLimit) {             
+            cout << ", ... (" << size - printLimit << " more)";         
+        }                  
+        
+        cout << "]" << endl;     
+    }          
+    
+    return result; 
+}
+vector<int> generateFewUniqueArray(int size, int uniqueCount = 5, 
+                                  bool printArray = true, 
+                                  int printLimit = 10) {
+    // Strict parameter checking - all errors throw exceptions
+    
+    if (size <= 0) {
+        throw invalid_argument("Array size must be positive. Got: " + to_string(size));
+    }
+    
+    if (uniqueCount <= 0) {
+        throw invalid_argument("Unique count must be positive. Got: " + to_string(uniqueCount));
+    }
+    
+    // 如果唯一值数量大于数组大小，报错而不是调整
+    if (uniqueCount > size) {
+        throw invalid_argument("Unique count (" + to_string(uniqueCount) + 
+                              ") cannot exceed array size (" + to_string(size) + ")");
+    }
+    
+    // Initialize random seed
+    static bool seeded = false;
+    if (!seeded) {
+        srand(time(nullptr));
+        seeded = true;
+    }
+    
+    // 1. Generate unique values set (random values)
+    unordered_set<int> uniqueSet;
+    vector<int> uniqueValues;
+    
+    // 确保生成指定数量的唯一值
+    // 使用足够大的范围以确保能生成足够的唯一值
+    int maxRandomValue = 1000000; // 足够大的范围
+    
+    for (int i = 0; i < uniqueCount; i++) {
+        // 尝试生成唯一值
+        int attempts = 0;
+        const int MAX_ATTEMPTS = 1000;
+        bool valueAdded = false;
+        
+        while (attempts < MAX_ATTEMPTS && !valueAdded) {
+            // 生成1到maxRandomValue之间的随机值
+            int randomValue = rand() % maxRandomValue + 1;
+            if (uniqueSet.find(randomValue) == uniqueSet.end()) {
+                uniqueSet.insert(randomValue);
+                uniqueValues.push_back(randomValue);
+                valueAdded = true;
+            }
+            attempts++;
+        }
+        
+        // 如果多次尝试后仍无法生成唯一值，使用递增策略
+        if (!valueAdded) {
+            // 使用基础值加上偏移量来确保唯一性
+            int baseValue = 10000 * (i + 1);
+            int offset = rand() % 1000;
+            int fallbackValue = baseValue + offset;
+            
+            // 确保fallbackValue是唯一的
+            while (uniqueSet.find(fallbackValue) != uniqueSet.end()) {
+                fallbackValue++;
+            }
+            
+            uniqueSet.insert(fallbackValue);
+            uniqueValues.push_back(fallbackValue);
+        }
+    }
+    
+    // 2. Fill array with these unique values (随机分布)
+    vector<int> arr(size);
+    for (int i = 0; i < size; i++) {
+        int randomIndex = rand() % uniqueValues.size();
+        arr[i] = uniqueValues[randomIndex];
+    }
+    
+    // 3. Print the array if requested
+    if (printArray) {
+        cout << "Generated few-unique array:" << endl;
+        cout << "  Size: " << size << " elements" << endl;
+        
+        // 统计数组中实际有多少个不同的值
+        unordered_set<int> actualUniqueSet(arr.begin(), arr.end());
+        int actualUniqueCount = actualUniqueSet.size();
+        cout << "  Unique values in array: " << actualUniqueCount 
+             << " (requested: " << uniqueCount << ")" << endl;
+        
+        if (actualUniqueCount < uniqueCount) {
+            cout << "  Note: Not all " << uniqueCount 
+                 << " generated values appear in the full array" << endl;
+        }
+        
+        // 显示生成的所有唯一值（排序后）
+        sort(uniqueValues.begin(), uniqueValues.end());
+        cout << "  Generated unique values: [";
+        
+        size_t showUnique = min(uniqueValues.size(), (size_t)5);
+        for (size_t i = 0; i < showUnique; i++) {
+            cout << uniqueValues[i];
+            if (i < showUnique - 1) cout << ", ";
+        }
+        if (uniqueValues.size() > 5) {
+            cout << ", ... (" << uniqueValues.size() - 5 << " more)";
+        }
+        cout << "]" << endl;
+        
+        // 显示数组内容
+        int show = min(size, printLimit);
+        cout << "  Array preview [" << show << "/" << size << "]: [";
         
         for (int i = 0; i < show; i++) {
             cout << arr[i];
             if (i < show - 1) cout << ", ";
         }
         
-        if (arr.size() > printLimit) {
-            cout << ", ... (" << arr.size() - printLimit << " more)";
+        if (size > printLimit) {
+            cout << ", ... (" << size - printLimit << " more)";
         }
-        
         cout << "]" << endl;
+        
+        // 显示预览部分的分布统计
+        if (show >= 3) {
+            unordered_map<int, int> freq;
+            for (int i = 0; i < show; i++) {
+                freq[arr[i]]++;
+            }
+            
+            if (freq.size() <= 10) { // 如果唯一值不多，显示完整统计
+                cout << "  Distribution in preview: ";
+                vector<pair<int, int>> freqVec(freq.begin(), freq.end());
+                sort(freqVec.begin(), freqVec.end(), 
+                     [](const pair<int, int>& a, const pair<int, int>& b) {
+                         return a.second > b.second; // 按频率降序
+                     });
+                
+                for (size_t i = 0; i < freqVec.size(); i++) {
+                    if (i > 0) cout << ", ";
+                    cout << freqVec[i].first << ":" << freqVec[i].second;
+                }
+                cout << endl;
+            }
+        }
     }
     
     return arr;
 }
-vector<int> generateFewUnique(int size);
-vector<int> generateLargeRandom(int size);
+vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1000000) {
+    // Parameter validation
+    if (size <= 0) {
+        throw invalid_argument("Error: Array size must be positive. Got: " + to_string(size));
+    }
+    
+    // Check minVal and maxVal
+    if (minVal > maxVal) {
+        throw invalid_argument("Error: minVal must be less than or equal to maxVal. Got: minVal=" + 
+                             to_string(minVal) + ", maxVal=" + to_string(maxVal));
+    }
+    
+    // Initialize random seed
+    static bool seeded = false;
+    if (!seeded) {
+        srand(time(nullptr));
+        seeded = true;
+    }
+    
+    // Generate array
+    vector<int> arr;
+    try {
+        // Pre-allocate memory for better performance with large arrays
+        arr.reserve(size);
+        
+        // Calculate random number range
+        long long range = static_cast<long long>(maxVal) - minVal + 1;
+        
+        // For large ranges, use better random number generation
+        if (range > RAND_MAX) {
+            // Use multiple rand() calls to generate larger random numbers
+            for (int i = 0; i < size; i++) {
+                // Generate random number between 0 and range-1
+                long long random_value = 0;
+                // Combine multiple rand() values for larger range
+                int parts = (range + RAND_MAX) / RAND_MAX;
+                for (int j = 0; j < parts; j++) {
+                    random_value = random_value * (RAND_MAX + 1LL) + rand();
+                }
+                arr.push_back(minVal + static_cast<int>(random_value % range));
+            }
+        } else {
+            // Small range, use rand() directly
+            for (int i = 0; i < size; i++) {
+                arr.push_back(minVal + rand() % static_cast<int>(range));
+            }
+        }
+    } catch (const bad_alloc& e) {
+        // Memory allocation failure
+        cerr << "Memory allocation failed for size " << size << ": " << e.what() << endl;
+        throw;
+    } catch (...) {
+        // Other exceptions
+        cerr << "Unknown error occurred while generating array of size " << size << endl;
+        throw;
+    }
+    
+    return arr;
+}
 
 // Task 2 & 3: Sorting Algorithms（注意：都需要引用传递 comparisons 以计数）
 void bubbleSort(vector<int>& arr, long long& comparisons);
