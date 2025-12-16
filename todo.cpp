@@ -163,12 +163,14 @@ vector<int> generateRandomDataset(int size,
     
     return arr;
 }
-vector<int> generateNearlySorted(int size,float disorderPercent = 0.1) {
-    if (size <= 0) return vector<int>();
+vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool printInfo = true) {
+    if (size <= 0) {
+        throw invalid_argument("Array size must be positive. Got: " + to_string(size));
+    }
     
-    // Limit disorder percentage between 0-50%
+    // Limit disorder percentage between 0-100%
     if (disorderPercent < 0) disorderPercent = 0;
-    if (disorderPercent > 0.5) disorderPercent = 0.5;
+    if (disorderPercent > 1.0) disorderPercent = 1.0;
     
     // Initialize random seed
     static bool seeded = false;
@@ -186,12 +188,85 @@ vector<int> generateNearlySorted(int size,float disorderPercent = 0.1) {
     // 2. Calculate number of elements to disorder
     int disorderCount = static_cast<int>(size * disorderPercent);
     
-    // 3. Randomly select positions and replace with random values
-    for (int i = 0; i < disorderCount; i++) {
-        int randomIndex = rand() % size;
-        int randomValue = 1 + rand() % (size * 2);  // Larger range
-        arr[randomIndex] = randomValue;
+    // 3. 只在实际需要修改元素时才进行修改
+    if (disorderCount > 0) {
+        // 简化：创建一个索引列表并打乱它
+        vector<int> indices(size);
+        for (int i = 0; i < size; i++) indices[i] = i;
+        
+        // 随机打乱索引
+        for (int i = size - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            swap(indices[i], indices[j]);
+        }
+        
+        // 修改前disorderCount个索引对应的元素
+        for (int i = 0; i < disorderCount; i++) {
+            int randomIndex = indices[i];
+            int randomValue = 1 + rand() % (size * 2);
+            arr[randomIndex] = randomValue;
+        }
     }
+    
+    // 如果不需要打印信息，直接返回数组
+    if (!printInfo) {
+        return arr;
+    }
+    
+    // 使用DatasetFeatures结构体计算和打印信息
+    DatasetFeatures features;
+    features.data = arr;
+    features.size = size;
+    
+    // 计算有序度
+    if (arr.size() < 2) {
+        features.sortedness = 1.0;
+    } else {
+        long long inversions = 0;
+        int n = arr.size();
+        
+        // 计算逆序数
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (arr[i] > arr[j]) inversions++;
+            }
+        }
+        
+        // 最大可能的逆序数 = n*(n-1)/2
+        long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
+        
+        if (maxInversions == 0) {
+            features.sortedness = 1.0;
+        } else {
+            // 有序度 = 1 - (逆序数/最大逆序数)
+            features.sortedness = 1.0 - (static_cast<double>(inversions) / maxInversions);
+        }
+    }
+    
+    // 计算唯一元素数量
+    unordered_set<int> uniqueSet(arr.begin(), arr.end());
+    features.uniqueCount = uniqueSet.size();
+    
+    // 打印信息
+    cout << "=== Generated Nearly Sorted Array ===" << endl;
+    cout << "Type: " << features.type << endl;
+    cout << "Size: " << features.size << " elements" << endl;
+    cout << "Disorder level: " << static_cast<int>(disorderPercent * 100) << "%" << endl;
+    cout << "Sortedness: " << features.sortedness << " (0=random, 1=sorted)" << endl;
+    cout << "Unique values: " << features.uniqueCount << endl;
+    
+    // 打印数组内容
+    int show = min(10, size);
+    cout << "Data (first " << show << "): [";
+    for (int i = 0; i < show; i++) {
+        cout << arr[i];
+        if (i < show - 1) cout << ", ";
+    }
+    if (size > show) {
+        cout << ", ... " << size - show << " more";
+    }
+    cout << "]" << endl;
+    cout << "===================================" << endl;
     
     return arr;
 }
