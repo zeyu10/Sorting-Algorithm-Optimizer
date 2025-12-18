@@ -5,7 +5,6 @@
 #include <string>
 #include <cmath>
 
-// 保持和之前一样的枚举
 enum AlgorithmType {
     BUBBLE_SORT,
     INSERTION_SORT,
@@ -13,43 +12,44 @@ enum AlgorithmType {
     QUICK_SORT
 };
 
-// 单个训练样本的结构
-struct TrainingSample {
-    double normSize;        // 归一化后的大小 (Size / 10000.0)
-    double sortedness;      // 0-1
-    double reversedness;    // 0-1
-    double uniqueness;      // 0-1
-    AlgorithmType bestAlgo; // 这个特征组合下的最佳算法
+// 特征结构体
+struct DatasetFeatures {
+    int size;               
+    double sortedness;      // 0.0 - 1.0
+    double reversedness;    // 0.0 - 1.0
+    double uniqueness;      // 0.0 - 1.0
 };
 
-// 数据集特征 (输入)
-struct DatasetFeatures {
-    int originalSize;
-    double sortedness;
-    double reversedness;
-    double uniqueness;
+// 训练样本结构
+struct TrainingSample {
+    DatasetFeatures features;
+    AlgorithmType bestAlgo;
 };
 
 class KNNOptimizer {
 public:
-    // 初始化：加载“伪造”的训练数据
-    KNNOptimizer(); 
+    KNNOptimizer(); // 构造函数初始化知识库
 
-    // 核心功能：预测
-    // k = 3 (默认找最近的3个邻居)
-    AlgorithmType predict(DatasetFeatures features, int k = 3);
-
-    // 辅助：提取特征 (和之前一样，但为了完整性我们可以复用或重写)
+    // 核心功能：提取特征 (O(N) 采样优化)
     static DatasetFeatures extractFeatures(int* arr, int n);
-    
-    // 辅助：获取名字
+
+    // 核心功能：预测 (使用加权 k-NN)
+    AlgorithmType predict(DatasetFeatures input, int k = 5);
+
+    // 辅助功能：获取名称
     static std::string getAlgorithmName(AlgorithmType type);
 
 private:
     std::vector<TrainingSample> trainingData;
 
-    // 计算两个点之间的欧几里得距离
-    double calculateDistance(const TrainingSample& sample, const DatasetFeatures& input);
+    // 计算加权欧几里得距离
+    double calculateDistance(const DatasetFeatures& f1, const DatasetFeatures& f2);
+
+    // 归一化辅助函数 (将 Size 映射到 0-1)
+    double normalizeSize(int size);
+
+    // 安全守卫：防止在大数据集上运行 O(N^2) 算法
+    AlgorithmType enforceSafetyRules(AlgorithmType predicted, int dataSize);
 };
 
 #endif
