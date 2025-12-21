@@ -1,6 +1,6 @@
 /*
  * AI-Driven Sorting Algorithm Optimizer - Graphical User Interface
- * qmake SortingAlgorithmOptimizer.pro
+ * qmake SortingAlgorithmOptimizerGUI.pro
  * make
  * ./SortingAlgorithmOptimizerGUI
  */
@@ -127,6 +127,10 @@ public:
 
     // Partition function for Quick Sort
     static int partition(vector<int>& arr, int low, int high, long long& comparisons) {
+        // Randomize pivot to avoid worst-case on reversed/sorted data
+        int randomIndex = low + rand() % (high - low + 1);
+        swap(arr[randomIndex], arr[high]);
+        
         int pivot = arr[high];
         int i = low - 1;
         for (int j = low; j < high; j++) {
@@ -229,15 +233,11 @@ public:
         features.sortedness = (double)ascendingPairs / (features.size - 1);
         features.reversedness = (double)descendingPairs / (features.size - 1);
         
-        // Calculate uniqueness (sample first 1000 elements for performance)
-        int sampleSize = min(1000, features.size);
-        unordered_set<int> uniqueElements;
-        for (int i = 0; i < sampleSize; i++) {
-            uniqueElements.insert(data[i]);
-        }
+        // Calculate uniqueness (use full dataset for accuracy)
+        unordered_set<int> uniqueElements(data.begin(), data.end());
         
         features.uniqueCount = uniqueElements.size();
-        features.uniqueRatio = (double)uniqueElements.size() / sampleSize;
+        features.uniqueRatio = (double)uniqueElements.size() / features.size;
         
         // Classify dataset type
         if (features.sortedness >= 0.90) features.type = "Nearly Sorted";
@@ -277,9 +277,10 @@ public:
         }
         
         // Case B: Reversed
-        // Quick Sort is better for reversed data
+        // Merge Sort is better for reversed data (stable O(N log N))
+        // Quick Sort with fixed pivot has O(N^2) worst case on reversed data
         if (features.reversedness >= 0.90) {
-            return QUICK_SORT;
+            return MERGE_SORT;
         }
         
         // Case C: Few unique values
@@ -361,7 +362,7 @@ public:
         
         genLayout->addWidget(new QLabel("Type:"));
         datasetTypeCombo = new QComboBox();
-        datasetTypeCombo->addItems({"Random", "Nearly Sorted", "Reversed", "Few Unique"});
+        datasetTypeCombo->addItems({"Random", "Nearly Sorted", "Reversed", "Few Unique", "Large Random"});
         genLayout->addWidget(datasetTypeCombo);
         
         genLayout->addWidget(new QLabel("Size:"));
@@ -383,7 +384,7 @@ public:
         generateBtn->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; padding: 8px;");
         genLayout->addWidget(generateBtn);
         
-        runBtn = new QPushButton("Run Analysis & Sort");
+        runBtn = new QPushButton("Run Analysis and Sort");
         runBtn->setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; padding: 8px;");
         runBtn->setEnabled(false);
         genLayout->addWidget(runBtn);
@@ -396,7 +397,7 @@ public:
         QVBoxLayout* previewLayout = new QVBoxLayout(previewGroup);
         dataPreviewText = new QTextEdit();
         dataPreviewText->setReadOnly(true);
-        dataPreviewText->setMaximumHeight(80);
+        dataPreviewText->setMinimumHeight(100);
         dataPreviewText->setPlaceholderText("Click 'Generate Dataset' to start...");
         previewLayout->addWidget(dataPreviewText);
         mainLayout->addWidget(previewGroup);
@@ -406,7 +407,7 @@ public:
         QVBoxLayout* analysisLayout = new QVBoxLayout(analysisGroup);
         analysisResultText = new QTextEdit();
         analysisResultText->setReadOnly(true);
-        analysisResultText->setMaximumHeight(120);
+        analysisResultText->setMinimumHeight(120);
         analysisLayout->addWidget(analysisResultText);
         mainLayout->addWidget(analysisGroup);
         
@@ -418,6 +419,7 @@ public:
         resultsTable->setHorizontalHeaderLabels({"Algorithm", "Comparisons", "Time(ms)"});
         resultsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         resultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        resultsTable->setMinimumHeight(240);
         resultsLayout->addWidget(resultsTable);
         mainLayout->addWidget(resultsGroup);
         
@@ -429,7 +431,9 @@ public:
         connect(generateBtn, &QPushButton::clicked, this, &SortingVisualizer::onGenerate);
         connect(runBtn, &QPushButton::clicked, this, &SortingVisualizer::onRun);
         connect(datasetTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) {
-            uniqueCountSpinBox->setEnabled(index == 3);  // Enable only for "Few Unique" type
+            // Enable unique count spinbox only for "Few Unique" (index 3)
+            uniqueCountSpinBox->setEnabled(index == 3);
+            uniqueCountLabel->setEnabled(index == 3);
         });
     }
 
@@ -447,6 +451,15 @@ private slots:
                 case 1: currentDataset = SortingEngine::generateNearlySorted(size); break;
                 case 2: currentDataset = SortingEngine::generateReversed(size); break;
                 case 3: currentDataset = SortingEngine::generateFewUnique(size, uniqueCountSpinBox->value()); break;
+                case 4: 
+                    // Large Random Dataset
+                    if (size < 10000) {
+                        QMessageBox::information(this, "Info", "Large Random Dataset requires minimum size of 10000. Size adjusted to 10000.");
+                        size = 10000;
+                        dataSizeSpinBox->setValue(10000);
+                    }
+                    currentDataset = SortingEngine::generateRandomDataset(size);
+                    break;
             }
             
             // Display Preview

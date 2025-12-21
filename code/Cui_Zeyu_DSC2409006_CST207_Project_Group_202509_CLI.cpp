@@ -1,6 +1,6 @@
 /*
  * AI-Driven Sorting Algorithm Optimizer - Command Line Interface
- * g++ Cui_Zeyu_DSC2409006_CST207_Project_Group_202509_CLI.cpp -o SortingAlgorithmOptimizerCLI.exe -std=c++11
+ * g++ Cui_Zeyu_DSC2409006_CST207_Project_Group_202509_CLI.cpp -o SortingAlgorithmOptimizerCLI -std=c++11
  * ./SortingAlgorithmOptimizerCLI
  */
 
@@ -114,6 +114,10 @@ public:
 
     // Partition function for Quick Sort
     static int partition(vector<int>& arr, int low, int high, long long& comparisons) {
+        // Randomize pivot to avoid worst-case on reversed/sorted data
+        int randomIndex = low + rand() % (high - low + 1);
+        swap(arr[randomIndex], arr[high]);
+        
         int pivot = arr[high];
         int i = low - 1;
         for (int j = low; j < high; j++) {
@@ -216,15 +220,11 @@ public:
         features.sortedness = (double)ascendingPairs / (features.size - 1);
         features.reversedness = (double)descendingPairs / (features.size - 1);
         
-        // Calculate uniqueness (sample first 1000 elements for performance)
-        int sampleSize = min(1000, features.size);
-        unordered_set<int> uniqueElements;
-        for (int i = 0; i < sampleSize; i++) {
-            uniqueElements.insert(data[i]);
-        }
+        // Calculate uniqueness (use full dataset for accuracy)
+        unordered_set<int> uniqueElements(data.begin(), data.end());
         
         features.uniqueCount = uniqueElements.size();
-        features.uniqueRatio = (double)uniqueElements.size() / sampleSize;
+        features.uniqueRatio = (double)uniqueElements.size() / features.size;
         
         // Classify dataset type
         if (features.sortedness >= 0.90) features.type = "Nearly Sorted";
@@ -264,9 +264,10 @@ public:
         }
         
         // Case B: Reversed
-        // Quick Sort is better for reversed data
+        // Merge Sort is better for reversed data (stable O(N log N))
+        // Quick Sort with fixed pivot has O(N^2) worst case on reversed data
         if (features.reversedness >= 0.90) {
-            return QUICK_SORT;
+            return MERGE_SORT;
         }
         
         // Case C: Few unique values
@@ -327,6 +328,7 @@ void displayMenu() {
     cout << "  2. Nearly Sorted Dataset" << endl;
     cout << "  3. Reversed Dataset" << endl;
     cout << "  4. Few Unique Values Dataset" << endl;
+    cout << "  5. Large Random Dataset" << endl;
     cout << "  0. Exit" << endl;
     printSeparator('-', 70);
 }
@@ -411,8 +413,8 @@ int main() {
             break;
         }
         
-        if (choice < 1 || choice > 4) {
-            cout << "\nInvalid choice! Please select 1-4 or 0 to exit." << endl;
+        if (choice < 1 || choice > 5) {
+            cout << "\nInvalid choice! Please select 1-5 or 0 to exit." << endl;
             continue;
         }
         
@@ -443,6 +445,14 @@ int main() {
                     if (uniqueCount < 2) uniqueCount = 2;
                     if (uniqueCount > 50) uniqueCount = 50;
                     dataset = SortingEngine::generateFewUnique(size, uniqueCount);
+                    break;
+                case 5:
+                    // Large Random Dataset (enforce minimum size)
+                    if (size < 10000) {
+                        cout << "Note: Large Random Dataset requires minimum size of 10000. Adjusting size to 10000." << endl;
+                        size = 10000;
+                    }
+                    dataset = SortingEngine::generateRandomDataset(size);
                     break;
             }
             
