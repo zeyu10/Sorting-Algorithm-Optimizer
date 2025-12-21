@@ -11,14 +11,17 @@ enum AlgoType {
 struct DatasetFeatures {
     vector<int> data;
     int size;
-    double sortedness;  // 0.0（乱序）到 1.0（已排序）
-    int uniqueCount;    // 唯一元素数量
-    string type;        // 数组类型   
+    double sortedness;    // 0.0 (random) to 1.0 (sorted)
+    int uniqueCount;      // Number of unique elements
+    string type;          // Dataset type
+    double reversedness;  // Reverse degree (0.0 ~ 1.0)
+    double uniqueRatio;   // Uniqueness ratio (0.0 ~ 1.0)
+    bool isLargeDataset;  // Large dataset indicator (>1000)
 };
 
 struct SortMetrics {
-    long long comparisons = 0; // 比较次数
-    double executionTimeMs = 0.0; // 执行时间（毫秒）
+    long long comparisons = 0;      // Number of comparisons
+    double executionTimeMs = 0.0;   // Execution time in milliseconds
     string algoName;
 };
 
@@ -81,50 +84,42 @@ vector<int> generateRandomDataset(int size,
         }
     }
     
-    // 如果不需要打印，直接返回数组
     if (!printInfo) {
         return arr;
     }
     
-    // 计算特征用于打印
     DatasetFeatures features;
     features.data = arr;
     features.size = size;
     
-    // 计算有序度
+    // Calculate sortedness
     if (arr.size() < 2) {
-        features.sortedness = 0.5; // 单个元素时返回中间值
+        features.sortedness = 0.5;
     } else {
         long long inversions = 0;
         int n = arr.size();
         
-        // 计算逆序数
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 if (arr[i] > arr[j]) inversions++;
             }
         }
         
-        // 最大可能的逆序数 = n*(n-1)/2
         long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
         
         if (maxInversions == 0) {
             features.sortedness = 0.5;
         } else {
-            // 逆序比 = 逆序数/最大逆序数
             double inversionRatio = static_cast<double>(inversions) / maxInversions;
-            
-            // 有序度 = 1 - 2 * |逆序比 - 0.5|
             features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
             features.sortedness = max(0.0, min(1.0, features.sortedness));
         }
     }
     
-    // 计算唯一元素数量
     unordered_set<int> uniqueSet(arr.begin(), arr.end());
     features.uniqueCount = uniqueSet.size();
     
-    // 设置数组类型
+    // Set dataset type
     string valueRange = "[" + to_string(minVal) + ", " + to_string(maxVal) + "]";
     if (minVal == numeric_limits<int>::min() && maxVal == numeric_limits<int>::max()) {
         features.type = "Completely Random Array (full int range)";
@@ -134,7 +129,6 @@ vector<int> generateRandomDataset(int size,
         features.type = "Random Array with Range " + valueRange;
     }
     
-    // 打印信息
     cout << "=== Generated Random Dataset ===" << endl;
     cout << "Type: " << features.type << endl;
     cout << "Size: " << features.size << " elements" << endl;
@@ -145,7 +139,6 @@ vector<int> generateRandomDataset(int size,
          << (features.size > 0 ? (100.0 * features.uniqueCount / features.size) : 0.0)
          << "% of total)" << endl;
     
-    // 打印数组预览
     cout << "Array preview [" << min(printLimit, size) << "/" << size << "]: [";
     
     int show = min(printLimit, size);
@@ -179,7 +172,7 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
         seeded = true;
     }
     
-    // 1. Create sorted array
+    // Create sorted array
     vector<int> arr(size);
     for (int i = 0; i < size; i++) {
         arr[i] = i + 1;
@@ -188,19 +181,17 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
     // 2. Calculate number of elements to disorder
     int disorderCount = static_cast<int>(size * disorderPercent);
     
-    // 3. 只在实际需要修改元素时才进行修改
     if (disorderCount > 0) {
-        // 简化：创建一个索引列表并打乱它
         vector<int> indices(size);
         for (int i = 0; i < size; i++) indices[i] = i;
         
-        // 随机打乱索引
+        // Shuffle indices
         for (int i = size - 1; i > 0; i--) {
             int j = rand() % (i + 1);
             swap(indices[i], indices[j]);
         }
         
-        // 修改前disorderCount个索引对应的元素
+        // Modify first disorderCount elements
         for (int i = 0; i < disorderCount; i++) {
             int randomIndex = indices[i];
             int randomValue = 1 + rand() % (size * 2);
@@ -208,46 +199,37 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
         }
     }
     
-    // 如果不需要打印信息，直接返回数组
     if (!printInfo) {
         return arr;
     }
     
-    // 使用DatasetFeatures结构体计算和打印信息
     DatasetFeatures features;
     features.data = arr;
     features.size = size;
     
-    // 计算有序度
     if (arr.size() < 2) {
         features.sortedness = 1.0;
     } else {
         long long inversions = 0;
         int n = arr.size();
         
-        // 计算逆序数
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 if (arr[i] > arr[j]) inversions++;
             }
         }
         
-        // 最大可能的逆序数 = n*(n-1)/2
         long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
         
         if (maxInversions == 0) {
             features.sortedness = 1.0;
         } else {
-            // 有序度 = 1 - (逆序数/最大逆序数)
             features.sortedness = 1.0 - (static_cast<double>(inversions) / maxInversions);
         }
     }
     
-    // 计算唯一元素数量
     unordered_set<int> uniqueSet(arr.begin(), arr.end());
     features.uniqueCount = uniqueSet.size();
-    
-    // 打印信息
     cout << "=== Generated Nearly Sorted Array ===" << endl;
     cout << "Type: " << features.type << endl;
     cout << "Size: " << features.size << " elements" << endl;
@@ -270,6 +252,7 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
     
     return arr;
 }
+
 vector<int> generateReversed(int size, int printLimit = 10) {     
     if (size <= 0) {         
         throw invalid_argument("Array size must be positive. Got: " + to_string(size));
@@ -277,26 +260,22 @@ vector<int> generateReversed(int size, int printLimit = 10) {
     
     vector<int> arr(size);
     
-    // 使用当前时间作为随机种子
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
     uniform_int_distribution<int> distribution(1, size * 10);
     
-    // 生成随机数组
     for (int i = 0; i < size; i++) {
         arr[i] = distribution(generator);
     }
     
-    // 按降序排序
     sort(arr.begin(), arr.end(), greater<int>());
     
-    // 使用DatasetFeatures结构体计算特征
+    // Calculate features
     DatasetFeatures features;
     features.data = arr;
     features.size = size;
     features.type = "Random descending array";
     
-    // 计算有序度
     if (size < 2) {
         features.sortedness = 1.0;
     } else {
@@ -310,11 +289,8 @@ vector<int> generateReversed(int size, int printLimit = 10) {
         features.sortedness = (double)correct / totalPairs;
     }
     
-    // 计算唯一元素数量
     unordered_set<int> uniqueSet(arr.begin(), arr.end());
     features.uniqueCount = uniqueSet.size();
-    
-    // 打印数组
     if (arr.empty()) {         
         cout << "[] (empty array)" << endl;     
     } else {         
@@ -333,13 +309,12 @@ vector<int> generateReversed(int size, int printLimit = 10) {
         cout << "]" << endl;     
     }          
     
-    return arr; 
+    return arr;
 }
+
 vector<int> generateFewUniqueArray(int size, int uniqueCount = 5, 
                                   bool printArray = true, 
                                   int printLimit = 10) {
-    // Strict parameter checking - all errors throw exceptions
-    
     if (size <= 0) {
         throw invalid_argument("Array size must be positive. Got: " + to_string(size));
     }
@@ -348,7 +323,6 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
         throw invalid_argument("Unique count must be positive. Got: " + to_string(uniqueCount));
     }
     
-    // 如果唯一值数量大于数组大小，报错而不是调整
     if (uniqueCount > size) {
         throw invalid_argument("Unique count (" + to_string(uniqueCount) + 
                               ") cannot exceed array size (" + to_string(size) + ")");
@@ -361,22 +335,18 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
         seeded = true;
     }
     
-    // 1. Generate unique values set (random values)
+    // Generate unique values set
     unordered_set<int> uniqueSet;
     vector<int> uniqueValues;
     
-    // 确保生成指定数量的唯一值
-    // 使用足够大的范围以确保能生成足够的唯一值
-    int maxRandomValue = 1000000; // 足够大的范围
+    int maxRandomValue = 1000000;
     
     for (int i = 0; i < uniqueCount; i++) {
-        // 尝试生成唯一值
         int attempts = 0;
         const int MAX_ATTEMPTS = 1000;
         bool valueAdded = false;
         
         while (attempts < MAX_ATTEMPTS && !valueAdded) {
-            // 生成1到maxRandomValue之间的随机值
             int randomValue = rand() % maxRandomValue + 1;
             if (uniqueSet.find(randomValue) == uniqueSet.end()) {
                 uniqueSet.insert(randomValue);
@@ -386,14 +356,12 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
             attempts++;
         }
         
-        // 如果多次尝试后仍无法生成唯一值，使用递增策略
+        // Fallback strategy if random generation fails
         if (!valueAdded) {
-            // 使用基础值加上偏移量来确保唯一性
             int baseValue = 10000 * (i + 1);
             int offset = rand() % 1000;
             int fallbackValue = baseValue + offset;
             
-            // 确保fallbackValue是唯一的
             while (uniqueSet.find(fallbackValue) != uniqueSet.end()) {
                 fallbackValue++;
             }
@@ -403,57 +371,46 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
         }
     }
     
-    // 2. Fill array with these unique values (随机分布)
+    // Fill array with these unique values
     vector<int> arr(size);
     for (int i = 0; i < size; i++) {
         int randomIndex = rand() % uniqueValues.size();
         arr[i] = uniqueValues[randomIndex];
     }
     
-    // 如果不需要打印信息，直接返回数组
     if (!printArray) {
         return arr;
     }
     
-    // 使用DatasetFeatures结构体计算和打印信息
     DatasetFeatures features;
     features.data = arr;
     features.size = size;
     
-    // 计算有序度
     if (arr.size() < 2) {
         features.sortedness = 0.5;
     } else {
         long long inversions = 0;
         int n = arr.size();
         
-        // 计算逆序数
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 if (arr[i] > arr[j]) inversions++;
             }
         }
         
-        // 最大可能的逆序数 = n*(n-1)/2
         long long maxInversions = static_cast<long long>(n) * (n - 1) / 2;
         
         if (maxInversions == 0) {
             features.sortedness = 0.5;
         } else {
-            // 逆序比 = 逆序数/最大逆序数
             double inversionRatio = static_cast<double>(inversions) / maxInversions;
-            
-            // 有序度 = 1 - 2 * |逆序比 - 0.5|
             features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
             features.sortedness = max(0.0, min(1.0, features.sortedness));
         }
     }
     
-    // 计算唯一元素数量
     unordered_set<int> actualUniqueSet(arr.begin(), arr.end());
     features.uniqueCount = actualUniqueSet.size();
-    
-    // 打印信息
     cout << "=== Generated Few Unique Array ===" << endl;
     cout << "Type: " << features.type << endl;
     cout << "Size: " << features.size << " elements" << endl;
@@ -462,7 +419,6 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
     cout << "Sortedness: " << fixed << setprecision(3) << features.sortedness 
          << " (0=random, 1=sorted)" << endl;
     
-    // 打印生成的唯一值
     sort(uniqueValues.begin(), uniqueValues.end());
     cout << "Generated unique values (" << uniqueValues.size() << "): [";
     int showUnique = min(5, (int)uniqueValues.size());
@@ -475,7 +431,6 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
     }
     cout << "]" << endl;
     
-    // 打印数组内容
     int show = min(printLimit, size);
     cout << "Array preview [" << show << "/" << size << "]: [";
     for (int i = 0; i < show; i++) {
@@ -488,7 +443,6 @@ vector<int> generateFewUniqueArray(int size, int uniqueCount = 5,
     }
     cout << "]" << endl;
     
-    // 打印预览部分的统计
     if (show >= 5) {
         unordered_set<int> previewUniqueSet;
         for (int i = 0; i < show; i++) {
@@ -560,17 +514,15 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
         throw;     
     }          
 
-    // 如果不需要打印信息，直接返回数组
     if (!printInfo) {
         return arr;
     }
     
-    // 使用DatasetFeatures结构体计算和打印信息
     DatasetFeatures features;
     features.data = arr;
     features.size = size;
     
-    // 设置数组类型
+    // Set dataset type
     if (size >= 10000) {
         features.type = "Large Random Array [" + to_string(minVal) + ".." + to_string(maxVal) + "]";
     } else if (size >= 1000) {
@@ -579,12 +531,10 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
         features.type = "Small Random Array [" + to_string(minVal) + ".." + to_string(maxVal) + "]";
     }
     
-    // 计算有序度（对于随机数组，理论上应该接近0）
-    // 对于大数组，我们只计算一部分以提高性能
+    // Calculate sortedness (sample-based for large arrays)
     if (arr.size() < 2) {
         features.sortedness = 0.5;
     } else {
-        // 对于大数组，计算一部分元素的有序度
         int checkSize = min(1000, size);
         long long inversions = 0;
         
@@ -598,29 +548,21 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
         if (maxInversions == 0) {
             features.sortedness = 0.5;
         } else {
-            // 有序度 = 1 - (逆序数/最大逆序数)
             double inversionRatio = static_cast<double>(inversions) / maxInversions;
-            // 随机数组的有序度应该接近0
             features.sortedness = 1.0 - 2.0 * fabs(inversionRatio - 0.5);
             features.sortedness = max(0.0, min(1.0, features.sortedness));
         }
     }
     
-    // 计算唯一元素数量
-    // 对于大数组，也计算一部分以提高性能
+    // Calculate unique count (sample-based for large arrays)
     if (size <= 5000) {
-        // 对于小数组，直接计算
         unordered_set<int> uniqueSet(arr.begin(), arr.end());
         features.uniqueCount = uniqueSet.size();
     } else {
-        // 对于大数组，计算前一部分的唯一值数量
         int checkSize = min(5000, size);
         unordered_set<int> uniqueSet(arr.begin(), arr.begin() + checkSize);
         features.uniqueCount = uniqueSet.size();
-        // 不进行估算，只显示实际检查到的唯一值数量
     }
-    
-    // 打印信息
     cout << "=== Generated Random Array ===" << endl;
     cout << "Type: " << features.type << endl;
     cout << "Size: " << features.size << " elements" << endl;
@@ -629,9 +571,7 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
          << " (0=random, 1=sorted)" << endl;
     cout << "Unique values (in checked portion): " << features.uniqueCount << endl;
     
-    // 计算并显示一些统计信息
     if (size > 0) {
-        // 只计算前一部分的统计信息以提高性能
         int checkSize = min(1000, size);
         int minValActual = arr[0];
         int maxValActual = arr[0];
@@ -648,7 +588,6 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
              << (static_cast<double>(sum) / checkSize) << endl;
     }
     
-    // 打印数组预览
     int show = min(printLimit, size);
     cout << "Array preview [" << show << "/" << size << "]: [";
     for (int i = 0; i < show; i++) {
@@ -660,11 +599,10 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
     }
     cout << "]" << endl;
     
-    
-    return arr; 
+    return arr;
 }
 
-// Task 2 & 3: Sorting Algorithms（注意：都需要引用传递 comparisons 以计数）
+// Task 2 & 3: Sorting Algorithms with comparison counting
 void bubbleSort(vector<int>& arr, long long& comparisons);
 void insertionSort(vector<int>& arr, long long& comparisons);
 void mergeSort(vector<int>& arr, int l, int r, long long& comparisons);
@@ -674,35 +612,6 @@ void quickSort(vector<int>& arr, int low, int high, long long& comparisons);
 DatasetFeatures analyzeDataset(const vector<int>& data);
 AlgoType predictBestAlgorithm(const DatasetFeatures& features);
 string getAlgoName(AlgoType type);
-
-vector<int> generateRandom(int size) {
-    vector<int> data;
-    // TODO: 生成完全随机的数组
-    return data;
-}
-
-vector<int> generateNearlySorted(int size) {
-    vector<int> data;
-    // TODO: 生成几乎有序的数组（先排序，再随机交换少量元素）
-    return data;
-}
-
-vector<int> generateReversed(int size) {
-    vector<int> data;
-    // TODO: 生成降序排列的数组
-    return data;
-}
-
-vector<int> generateFewUnique(int size) {
-    vector<int> data;
-    // TODO: 生成含有大量重复元素的数组
-    return data;
-}
-
-vector<int> generateLargeRandom(int size) {
-    // TODO: 生成大容量随机数组（可以是 generateRandom 的别名）
-    return generateRandom(size);
-}
 
 void bubbleSort(vector<int>& arr, long long& comparisons) {
     int n = arr.size();
@@ -737,7 +646,42 @@ void insertionSort(vector<int>& arr, long long& comparisons) {
 }
 
 void merge(vector<int>& arr, int l, int m, int r, long long& comparisons) {
-    // TODO: Merge Sort 的合并逻辑
+    int n1 = m - l + 1;
+    int n2 = r - m;
+    
+    vector<int> left(n1);
+    vector<int> right(n2);
+    
+    for (int i = 0; i < n1; i++)
+        left[i] = arr[l + i];
+    for (int j = 0; j < n2; j++)
+        right[j] = arr[m + 1 + j];
+    
+    int i = 0, j = 0, k = l;
+    
+    while (i < n1 && j < n2) {
+        comparisons++;
+        if (left[i] <= right[j]) {
+            arr[k] = left[i];
+            i++;
+        } else {
+            arr[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+    
+    while (i < n1) {
+        arr[k] = left[i];
+        i++;
+        k++;
+    }
+    
+    while (j < n2) {
+        arr[k] = right[j];
+        j++;
+        k++;
+    }
 }
 
 void mergeSort(vector<int>& arr, int l, int r, long long& comparisons) {
@@ -749,8 +693,19 @@ void mergeSort(vector<int>& arr, int l, int r, long long& comparisons) {
 }
 
 int partition(vector<int>& arr, int low, int high, long long& comparisons) {
-    // TODO: Quick Sort 的 Partition 逻辑
-    return 0; // 替换为 pivot index
+    int pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        comparisons++;
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
 }
 
 void quickSort(vector<int>& arr, int low, int high, long long& comparisons) {
@@ -764,24 +719,93 @@ void quickSort(vector<int>& arr, int low, int high, long long& comparisons) {
 DatasetFeatures analyzeDataset(const vector<int>& data) {
     DatasetFeatures features;
     features.size = data.size();
+    features.isLargeDataset = (features.size > 1000);
     
-    // TODO: 计算 sortedness（例如：计算逆序对数量，或者相邻有序元素的比例）
-    features.sortedness = 0.0; 
+    if (features.size <= 1) {
+        features.sortedness = 1.0;
+        features.reversedness = 0.0;
+        features.uniqueCount = features.size;
+        features.uniqueRatio = 1.0;
+        features.type = "Single Element";
+        return features;
+    }
     
-    // TODO: 计算 uniqueCount（可以使用 set 或排序后去重计数）
-    features.uniqueCount = 0;
+    // Analyze sortedness and reversedness
+    long long ascendingPairs = 0;
+    long long descendingPairs = 0;
+    
+    for (int i = 0; i < features.size - 1; i++) {
+        if (data[i] <= data[i+1]) ascendingPairs++;
+        if (data[i] >= data[i+1]) descendingPairs++;
+    }
+    
+    features.sortedness = (double)ascendingPairs / (features.size - 1);
+    features.reversedness = (double)descendingPairs / (features.size - 1);
+    
+    // Analyze uniqueness (sample first 1000 elements for performance)
+    int sampleSize = min(1000, features.size);
+    unordered_set<int> uniqueElements;
+    for (int i = 0; i < sampleSize; i++) {
+        uniqueElements.insert(data[i]);
+    }
+    
+    features.uniqueCount = uniqueElements.size();
+    features.uniqueRatio = (double)uniqueElements.size() / sampleSize;
+    
+    if (features.sortedness >= 0.90) {
+        features.type = "Nearly Sorted";
+    } else if (features.reversedness >= 0.90) {
+        features.type = "Reversed";
+    } else if (features.uniqueRatio < 0.40) {
+        features.type = "Few Unique";
+    } else if (features.isLargeDataset) {
+        features.type = "Large Random";
+    } else {
+        features.type = "Random";
+    }
     
     return features;
 }
 
 AlgoType predictBestAlgorithm(const DatasetFeatures& features) {
-    // TODO: 根据 features 返回推荐算法
-    // 可以使用 Decision Tree 逻辑 (if-else)
-    // 例如: if (features.size < 100) return INSERTION_SORT;
-    // else if (features.sortedness > 0.9) return INSERTION_SORT;
-    // else return QUICK_SORT;
+    // AI Decision Tree based on algorithm complexity theory
     
-    return QUICK_SORT; // 默认返回
+    // Rule 1: Very small datasets (Size <= 50)
+    // Insertion Sort has low constant factor, faster than Quick/Merge recursion overhead
+    if (features.size <= 50) {
+        return INSERTION_SORT;
+    }
+    
+    // Rule 2: Large datasets (Size > 1000)
+    if (features.isLargeDataset) {
+        // Few unique values: Merge Sort is more stable than Quick Sort
+        if (features.uniqueRatio < 0.40) {
+            return MERGE_SORT;
+        }
+        return QUICK_SORT;
+    }
+    
+    // Rule 3: Medium-sized datasets (50 < Size <= 1000)
+    
+    // Case A: Nearly sorted
+    // Insertion Sort degrades to O(N) for nearly sorted data
+    if (features.sortedness >= 0.90) {
+        return INSERTION_SORT;
+    }
+    
+    // Case B: Reversed
+    // Insertion Sort worst case O(N^2) for reversed data
+    if (features.reversedness >= 0.90) {
+        return QUICK_SORT;
+    }
+    
+    // Case C: Few unique values
+    if (features.uniqueRatio < 0.40) {
+        return MERGE_SORT;
+    }
+    
+    // Case D: Random data
+    return QUICK_SORT;
 }
 
 string getAlgoName(AlgoType type) {
@@ -831,11 +855,11 @@ int main() {
     cin >> size;
 
     switch(choice) {
-        case 1: originalData = generateRandom(size); break;
-        case 2: originalData = generateNearlySorted(size); break;
-        case 3: originalData = generateReversed(size); break;
-        case 4: originalData = generateFewUnique(size); break;
-        default: originalData = generateRandom(size);
+        case 1: originalData = generateRandomDataset(size, 1, size * 10, false); break;
+        case 2: originalData = generateNearlySorted(size, 0.1, false); break;
+        case 3: originalData = generateReversed(size, 10); break;
+        case 4: originalData = generateFewUniqueArray(size, min(5, size), false); break;
+        default: originalData = generateRandomDataset(size, 1, size * 10, false);
     }
     
     if (size <= 50) {
@@ -845,8 +869,16 @@ int main() {
     }
 
     DatasetFeatures features = analyzeDataset(originalData);
-    cout << "\nAnalyzing Dataset Features...\n";
-    cout << "Size: " << features.size << ", Unique: " << features.uniqueCount << "\n";
+    cout << "\n[AI Analysis Report]" << endl;
+    cout << "------------------------------------------------" << endl;
+    cout << "Dataset Characteristics:" << endl;
+    cout << "  > Size:        " << features.size << (features.isLargeDataset ? " (Large)" : " (Small/Medium)") << endl;
+    cout << "  > Type:        " << features.type << endl;
+    cout << "  > Sortedness:  " << fixed << setprecision(1) << (features.sortedness * 100.0) << "%" << endl;
+    cout << "  > Reversed:    " << (features.reversedness * 100.0) << "%" << endl;
+    cout << "  > Uniqueness:  " << (features.uniqueRatio * 100.0) << "% (Estimated from sample)" << endl;
+    cout << "  > Unique Count: " << features.uniqueCount << endl;
+    cout << "------------------------------------------------" << endl;
     
     AlgoType predicted = predictBestAlgorithm(features);
     cout << ">>> AI Predicts Best Algorithm: " << getAlgoName(predicted) << " <<<\n\n";
@@ -863,7 +895,6 @@ int main() {
     results.push_back(runSort(MERGE_SORT, originalData));
     results.push_back(runSort(QUICK_SORT, originalData));
 
-    // 4. 展示结果表格
     cout << left << setw(20) << "Algorithm";
     cout << setw(15) << "Comparisons";
     cout << setw(15) << "Time (ms)" << "\n";
