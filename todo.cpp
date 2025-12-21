@@ -237,7 +237,6 @@ vector<int> generateNearlySorted(int size, float disorderPercent = 0.1, bool pri
     cout << "Sortedness: " << features.sortedness << " (0=random, 1=sorted)" << endl;
     cout << "Unique values: " << features.uniqueCount << endl;
     
-    // 打印数组内容
     int show = min(10, size);
     cout << "Data (first " << show << "): [";
     for (int i = 0; i < show; i++) {
@@ -603,16 +602,6 @@ vector<int> generateLargeRandom(int size = 10000, int minVal = 1, int maxVal = 1
 }
 
 // Task 2 & 3: Sorting Algorithms with comparison counting
-void bubbleSort(vector<int>& arr, long long& comparisons);
-void insertionSort(vector<int>& arr, long long& comparisons);
-void mergeSort(vector<int>& arr, int l, int r, long long& comparisons);
-void quickSort(vector<int>& arr, int low, int high, long long& comparisons);
-
-// Task 4: AI Module
-DatasetFeatures analyzeDataset(const vector<int>& data);
-AlgoType predictBestAlgorithm(const DatasetFeatures& features);
-string getAlgoName(AlgoType type);
-
 void bubbleSort(vector<int>& arr, long long& comparisons) {
     int n = arr.size();
     for (int i = 0; i < n - 1; i++) {
@@ -716,6 +705,7 @@ void quickSort(vector<int>& arr, int low, int high, long long& comparisons) {
     }
 }
 
+// Task 4: AI Module
 DatasetFeatures analyzeDataset(const vector<int>& data) {
     DatasetFeatures features;
     features.size = data.size();
@@ -845,9 +835,9 @@ int main() {
     int choice, size;
     vector<int> originalData;
 
-    cout << "=== AI-Driven Sorting Algorithm Optimizer ===\n";
-    cout << "Select Dataset Type:\n";
-    cout << "1. Random\n2. Nearly Sorted\n3. Reversed\n4. Few Unique\n";
+    cout << "=== AI-Driven Sorting Algorithm Optimizer ===" << endl;
+    cout << "Select Dataset Type:" << endl;
+    cout << "1. Random" << endl << "2. Nearly Sorted" << endl << "3. Reversed" << endl << "4. Few Unique" << endl;
     cout << "Enter choice: ";
     cin >> choice;
     
@@ -865,7 +855,7 @@ int main() {
     if (size <= 50) {
         cout << "Original Data: ";
         for (int x : originalData) cout << x << " ";
-        cout << "\n";
+        cout << endl;
     }
 
     DatasetFeatures features = analyzeDataset(originalData);
@@ -881,7 +871,7 @@ int main() {
     cout << "------------------------------------------------" << endl;
     
     AlgoType predicted = predictBestAlgorithm(features);
-    cout << ">>> AI Predicts Best Algorithm: " << getAlgoName(predicted) << " <<<\n\n";
+    cout << ">>> AI Predicts Best Algorithm: " << getAlgoName(predicted) << " <<<" << endl << endl;
 
     vector<SortMetrics> results;
     
@@ -889,7 +879,7 @@ int main() {
         results.push_back(runSort(BUBBLE_SORT, originalData));
         results.push_back(runSort(INSERTION_SORT, originalData));
     } else {
-        cout << "(Skipping O(n^2) algorithms due to large size)\n";
+        cout << "(Skipping O(n^2) algorithms due to large size)" << endl;
     }
     
     results.push_back(runSort(MERGE_SORT, originalData));
@@ -897,8 +887,8 @@ int main() {
 
     cout << left << setw(20) << "Algorithm";
     cout << setw(15) << "Comparisons";
-    cout << setw(15) << "Time (ms)" << "\n";
-    cout << "--------------------------------------------------\n";
+    cout << setw(15) << "Time (ms)" << endl;
+    cout << "--------------------------------------------------" << endl;
     
     string actualBestAlgo;
     double minTime = 1e9;
@@ -906,7 +896,7 @@ int main() {
     for (const auto& res : results) {
         cout << left << setw(20) << res.algoName;
         cout << setw(15) << res.comparisons;
-        cout << setw(15) << res.executionTimeMs << "\n";
+        cout << setw(15) << res.executionTimeMs << endl;
         
         if (res.executionTimeMs < minTime) {
             minTime = res.executionTimeMs;
@@ -914,11 +904,11 @@ int main() {
         }
     }
     
-    cout << "\nActual Best Algorithm: " << actualBestAlgo << "\n";
+    cout << endl << "Actual Best Algorithm: " << actualBestAlgo << endl;
     if (getAlgoName(predicted) == actualBestAlgo) {
-        cout << "AI Prediction was CORRECT!\n";
+        cout << "AI Prediction was CORRECT!" << endl;
     } else {
-        cout << "AI Prediction was INCORRECT.\n";
+        cout << "AI Prediction was INCORRECT." << endl;
     }
 
     return 0;
