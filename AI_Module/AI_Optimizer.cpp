@@ -35,16 +35,27 @@ DatasetFeatures AIOptimizer::analyzeDataset(int* arr, int n) {
     features.sortednessRatio = (double)ascendingPairs / (n - 1);
     features.reversedRatio = (double)descendingPairs / (n - 1);
 
-    // 2. 分析唯一性 (Uniqueness)
-    // 优化: 为了不拖慢整体速度，只采样前 100 个元素估算
+   // 2. 分析唯一性 (Uniqueness)
+    // 优化：使用随机采样代替前缀采样，避免数据分布不均导致的误判
     int sampleSize = (n < 100) ? n : 100;
     std::unordered_set<int> uniqueElements;
-    for (int i = 0; i < sampleSize; i++) {
-        uniqueElements.insert(arr[i]);
+    
+    // 如果样本很少，直接遍历
+    if (n <= 100) {
+        for (int i = 0; i < n; i++) uniqueElements.insert(arr[i]);
+    } else {
+        // 随机探针采样 (Random Probing)
+        // 注意：需确保外部已设置随机种子，或者在此处简单取模
+        for (int i = 0; i < sampleSize; i++) {
+            // 简单的伪随机跳跃采样，避免依赖外部 srand
+            int idx = (i * 997 + 13) % n; 
+            uniqueElements.insert(arr[idx]);
+        }
     }
+    // ... 上面是你刚粘贴进去的随机采样代码 ...
     features.uniqueRatio = (double)uniqueElements.size() / sampleSize;
-
-    return features;
+    
+    return features;  // <--- 必须加上这一行！！！
 }
 
 // ---------------------------------------------------------
