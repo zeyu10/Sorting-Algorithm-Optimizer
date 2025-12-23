@@ -227,7 +227,7 @@ public:
         features.uniqueRatio = (double)uniqueElements.size() / features.size;
         
         // Classify dataset type
-        if (features.sortedness >= 0.90) features.type = "Nearly Sorted";
+        if (features.sortedness >= 0.80) features.type = "Nearly Sorted";
         else if (features.reversedness >= 0.90) features.type = "Reversed";
         else if (features.uniqueRatio < 0.40) features.type = "Few Unique";
         else if (features.isLargeDataset) features.type = "Large Random";
@@ -259,7 +259,7 @@ public:
         
         // Case A: Nearly sorted
         // Insertion Sort degrades to O(N) for nearly sorted data
-        if (features.sortedness >= 0.90) {
+        if (features.sortedness >= 0.80) {
             return INSERTION_SORT;
         }
         
