@@ -1,6 +1,6 @@
 // AI_Optimizer.h
-// 对应课程: CST207 Design and Analysis of Algorithms
-// 模块功能: 负责分析数据集特征并推荐最佳排序算法
+// Course: CST207 Design and Analysis of Algorithms
+// Module: AI-Driven Sorting Algorithm Optimizer
 
 #ifndef AI_OPTIMIZER_H
 #define AI_OPTIMIZER_H
@@ -17,7 +17,7 @@ enum AlgorithmType {
 };
 
 // 定义数据集特征结构体
-// 包含所有决策所需的量化指标
+// 包含 AI 决策所需的量化指标
 struct DatasetFeatures {
     int size;                   // 数据规模
     double sortednessRatio;     // 有序度 (0.0 ~ 1.0)
@@ -45,11 +45,27 @@ public:
     static void printAnalysisReport(DatasetFeatures features, AlgorithmType recommendation);
     
 private:
-    // 内部使用的阈值常量 (便于调优)
-    static const int SIZE_THRESHOLD_SMALL = 50;     // 小数据集阈值
-    static const int SIZE_THRESHOLD_LARGE = 1000;   // 大数据集阈值 
-    static constexpr double SORTED_THRESHOLD = 0.90; // 有序判定阈值
-    static constexpr double UNIQUE_THRESHOLD = 0.40; // 重复判定阈值
+    // --- 决策树参数调优 (Decision Tree Hyperparameters) ---
+    
+    // 1. 小数据集阈值: 128
+    // 依据: 现代 CPU 缓存优化使得插入排序在 <128 时通常快于递归算法(Quick/Merge)
+    static const int SIZE_THRESHOLD_SMALL = 128;     
+    
+    // 2. 大数据集阈值: 1000
+    // 依据: 项目文档要求，超过 1000 的数据应跳过 O(N^2) 算法
+    static const int SIZE_THRESHOLD_LARGE = 1000;   
+    
+    // 3. 有序判定阈值: 0.95
+    // 依据: 只有非常接近有序时，插入排序的 O(N) 优势才能抵消其最坏情况风险
+    static constexpr double SORTED_THRESHOLD = 0.95; 
+
+    // 4. 逆序判定阈值: 0.80 (根据组长建议调整)
+    // 依据: 只要有 80% 是逆序，QuickSort 性能风险极高，必须强制切换到 MergeSort
+    static constexpr double REVERSED_THRESHOLD = 0.80;
+
+    // 5. 重复率判定阈值: 0.40
+    // 依据: 当唯一元素少于 40% 时，归并排序处理重复值的稳定性优于快排
+    static constexpr double UNIQUE_THRESHOLD = 0.40; 
 };
 
 #endif // AI_OPTIMIZER_H
