@@ -66,9 +66,9 @@
 
 \lstset{style=mystyle}
 
-\title{\vspace{-2cm}\textbf{AI-Driven Sorting Algorithm Optimizer\\[0.4em] Report}\vspace{-10pt}}
+\title{\textbf{AI-Driven Sorting Algorithm Optimizer\\[0.5em] Report}}
 \author{CST207 Design and Analysis of Algorithms Group Project}
-\date{\vspace{-0.4cm}Academic Session: 2025/09\vspace{-5pt}}
+\date{\vspace{-0.4cm}Academic Session: 2025/09}
 
 \begin{document}
 
@@ -78,8 +78,18 @@
 
 \maketitle
 
+\section*{Oral Presentation Video Link}
+\url{https://drive.google.com/drive/folders/1YNGKs7LQVs_FJW2VaJKDxGBAhHr5GaCm}
+
+\renewcommand{\contentsname}{Table of Contents}
+\tableofcontents
+
+\newpage
+
+\pagenumbering{arabic}
+
 \section*{Group Contribution Table}
-\vspace{-5pt}
+\vspace{-10pt}
 \begin{center}
 \begin{tabular}{|l|l|l|}
 \hline
@@ -99,20 +109,29 @@ DSC2409043 & Yu Mingquan & Implement Sorting Algorithms and Measure Performance 
 \end{tabular}
 \end{center}
 
-\section*{Oral Presentation Video Link}
-\url{https://drive.google.com/drive/folders/1YNGKs7LQVs_FJW2VaJKDxGBAhHr5GaCm}
-% \vspace{-10pt}
-\renewcommand{\contentsname}{Table of Contents}
-\tableofcontents
-
-\newpage
-
-\pagenumbering{arabic}
-
 \section{Introduction}
 In modern software engineering, sorting is a fundamental operation whose performance critically depends on the characteristics of the dataset—such as size, order (sortedness), and element uniqueness. While standard libraries often use a one-size-fits-all approach (typically Quicksort or Introsort), no single algorithm is optimal for every scenario.
 
 The goal of this project is to design and implement an \textbf{AI-Driven Sorting Algorithm Optimizer}. This system acts as an intelligent library that analyzes the input dataset's features and automatically selects the most efficient sorting algorithm. By integrating Artificial Intelligence (Decision Tree model) with traditional algorithmic analysis, we demonstrate how heuristics can optimize computational resource usage.
+
+\section{System Overview}
+
+In Figuire~\ref{fig:system_overview}, we illustrate the overall architecture of the system:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../pre/Mermaid Chart - Create complex, visual diagrams with text.-2025-12-27-073222.png}
+    \caption{System Architecture Overview}
+    \label{fig:system_overview}
+\end{figure}
+
+The system consists of three main components:
+\begin{enumerate}
+    \item \textbf{Dataset Generation:} Generate five dataset types (random, nearly sorted, reversed, few-unique, large random) with configurable size and distribution for comprehensive benchmarking. The generated datasets will be sorted by algorithms.
+
+    \item \textbf{Analysis and AI Module Prediction:} Extract features (size, sortedness, reversedness, unique ratio) and use decision-tree models to recommend the most suitable sorting algorithm. The decision tree in the AI module is constructed based on empirical observations and theoretical analysis of algorithm performance.
+
+    \item \textbf{Execution and Visualization:} Execute chosen algorithms, measure runtime and comparisons, and present results via CLI text and GUI tables. AI predictions are compared against actual performance to validate accuracy and shown visually.
+\end{enumerate}
 
 \section{Algorithm Design}
 
@@ -722,36 +741,6 @@ This system demonstrates how AI-driven optimization can enhance traditional algo
 The project fulfills the objective of automatically selecting optimal sorting strategies, demonstrating practical applications of combining algorithmic theory with artificial intelligence to optimize computational resource usage.
 
 \newpage
-
-% \bibliographystyle{plain}
-% \begin{thebibliography}{9}
-
-% \bibitem{cormen2009}
-% Cormen, T. H., Leiserson, C. E., Rivest, R. L., \& Stein, C. (2009). 
-% \textit{Introduction to Algorithms} (3rd ed.). MIT Press.
-
-% \bibitem{knuth1998}
-% Knuth, D. E. (1998). 
-% \textit{The Art of Computer Programming, Volume 3: Sorting and Searching} (2nd ed.). Addison-Wesley Professional.
-
-% \bibitem{mcilroy1993}
-% McIlroy, P. M., Bostic, K., \& McIlroy, M. D. (1993). 
-% Engineering a sort function. \textit{Software: Practice and Experience}, 23(11), 1249--1265.
-
-% \bibitem{bentley1993}
-% Bentley, J. L., \& McIlroy, M. D. (1993). 
-% Engineering a sort function. \textit{Software: Practice and Experience}, 23(11), 1249--1265.
-
-% \bibitem{quinlan1986}
-% Quinlan, J. R. (1986). 
-% Induction of decision trees. \textit{Machine Learning}, 1(1), 81--106.
-
-% \bibitem{wild2015}
-% Wild, S., Nebel, M. E., \& Neininger, R. (2015). 
-% Average case analysis of Java 7's dual pivot quicksort. \textit{Algorithmica}, 71(4), 848--881.
-
-% \end{thebibliography}
-% \bibliography{references}
 
 \appendix
 
