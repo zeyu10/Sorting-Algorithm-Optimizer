@@ -110,13 +110,13 @@ DSC2409043 & Yu Mingquan & Implement Sorting Algorithms and Measure Performance 
 \end{center}
 
 \section{Introduction}
-In modern software engineering, sorting is a fundamental operation whose performance critically depends on the characteristics of the dataset—such as size, order (sortedness), and element uniqueness. While standard libraries often use a one-size-fits-all approach (typically Quicksort or Introsort), no single algorithm is optimal for every scenario.
+In modern software engineering, sorting is a fundamental operation whose performance critically depends on the characteristics of the dataset—such as size, order (sortedness), and element uniqueness. While standard libraries often use a one-size-fits-all approach (typically Quick Sort or Insertion Sort), no single algorithm is optimal for every scenario.
 
 The goal of this project is to design and implement an \textbf{AI-Driven Sorting Algorithm Optimizer}. This system acts as an intelligent library that analyzes the input dataset's features and automatically selects the most efficient sorting algorithm. By integrating Artificial Intelligence (Decision Tree model) with traditional algorithmic analysis, we demonstrate how heuristics can optimize computational resource usage.
 
 \section{System Overview}
 
-In Figuire~\ref{fig:system_overview}, we illustrate the overall architecture of the system:
+In Figure~\ref{fig:system_overview}, we illustrate the overall architecture of the system:
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{../pre/Mermaid Chart - Create complex, visual diagrams with text.-2025-12-27-073222.png}
@@ -245,7 +245,7 @@ static void insertionSort(vector<int>& arr, long long& comparisons) {
 }
 \end{lstlisting}
 
-    \item \textbf{Merge Sort ($O(N \log N)$):} A stable, divide-and-conquer algorithm that guarantees performance but requires $O(N)$ auxiliary space. The algorithm recursively divides the array, then merges sorted subarrays.
+    \item \textbf{Merge Sort ($O(N \log N)$):} A stable, divide-and-conquer algorithm that guarantees performance but requires $O(N)$ auxiliary space. The algorithm recursively divides the array, then merges sorted sub-arrays.
     
 \begin{lstlisting}[language=C++]
 static void mergeSort(vector<int>& arr, int l, int r, long long& comparisons) {
